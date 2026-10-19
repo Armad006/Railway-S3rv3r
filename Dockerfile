@@ -142,7 +142,7 @@ RUN chown -R Exp1o5ive:Exp1o5ive /home/Exp1o5ive
 
 EXPOSE 22
 
-RUN printf '#!/bin/sh\nservice ssh start\nexec /bin/zsh\n' > /entrypoint.sh && \
+RUN printf '#!/bin/sh\nmkdir -p /var/run/sshd\nexec /usr/sbin/sshd -D -e\n' > /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
 WORKDIR /home/Exp1o5ive
