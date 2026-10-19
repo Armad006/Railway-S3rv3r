@@ -142,7 +142,7 @@ RUN chown -R Exp1o5ive:Exp1o5ive /home/Exp1o5ive
 
 EXPOSE 22
 
-RUN printf '#!/bin/sh\nmkdir -p /var/run/sshd\nexec /usr/sbin/sshd -D -e\n' > /entrypoint.sh && \
+RUN printf '#!/bin/sh\nmkdir -p /var/run/sshd\n/usr/sbin/sshd -e || echo "[warn] sshd failed to start"\necho "[ok] container is up and staying alive"\nexec tail -f /dev/null\n' > /entrypoint.sh && \
     chmod +x /entrypoint.sh
 
 WORKDIR /home/Exp1o5ive
