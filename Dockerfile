@@ -1,157 +1,145 @@
+FROM kalilinux/kali-linux-docker:latest
 
-FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive \
+    TERM=xterm-256color
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV LANG=en_US.UTF-8
-ENV LC_ALL=en_US.UTF-8
-ENV TERM=xterm-256color
-ENV HOME=/home/exp1o5ive
-ENV SHELL=/bin/zsh
-ENV DISPLAY=:1
-ENV CHROME_BIN=/usr/bin/google-chrome
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    bash zsh zsh-autosuggestions zsh-syntax-highlighting \
-    neovim vim nano tmux htop btop \
-    git curl wget ca-certificates gnupg \
-    python3 python3-pip python3-venv \
-    build-essential gcc g++ make cmake pkg-config \
-    rustc cargo \
-    iproute2 iputils-ping dnsutils net-tools \
-    openssh-client rsync unzip zip xz-utils \
-    jq tree less file procps lsof sudo locales tzdata \
-    xfce4 xfce4-terminal xfce4-session xfce4-panel xfdesktop4 xfwm4 \
-    dbus-x11 xauth x11-xserver-utils xterm \
-    tigervnc-standalone-server tigervnc-common novnc websockify \
-    util-linux fonts-liberation fonts-noto-color-emoji \
-    && locale-gen en_US.UTF-8 \
+RUN apt-get update && apt-get install -y \
+    openssh-server \
+    openssh-client \
+    zsh \
+    git \
+    curl \
+    wget \
+    vim \
+    nano \
+    htop \
+    neofetch \
+    lsof \
+    net-tools \
+    iputils-ping \
     && rm -rf /var/lib/apt/lists/*
 
-RUN install -d -m 0755 /etc/apt/keyrings \
-    && curl -fsSL https://dl.google.com/linux/linux_signing_key.pub \
-       | gpg --dearmor -o /etc/apt/keyrings/google-chrome.gpg \
-    && chmod 0644 /etc/apt/keyrings/google-chrome.gpg \
-    && echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] https://dl.google.com/linux/chrome/deb/ stable main" \
-       > /etc/apt/sources.list.d/google-chrome.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
+RUN useradd -m -s /bin/zsh Exp1o5ive && \
+    echo "Exp1o5ive:exp1o5ive@@1212" | chpasswd && \
+    echo "root:exp1o5ive@@1212" | chpasswd && \
+    mkdir -p /home/Exp1o5ive/.ssh && \
+    chmod 700 /home/Exp1o5ive/.ssh && \
+    chown -R Exp1o5ive:Exp1o5ive /home/Exp1o5ive
 
-RUN useradd -m -s /bin/zsh exp1o5ive \
-    && usermod -aG sudo exp1o5ive \
-    && printf 'exp1o5ive ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/exp1o5ive \
-    && chmod 0440 /etc/sudoers.d/exp1o5ive \
-    && install -d -o exp1o5ive -g exp1o5ive \
-       /home/exp1o5ive/.config/nvim \
-       /home/exp1o5ive/.vnc \
-       /home/exp1o5ive/Downloads \
-       /home/exp1o5ive/.local/share/applications
+RUN mkdir -p /var/run/sshd && \
+    ssh-keygen -A && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/^#Port 22/Port 22/' /etc/ssh/sshd_config && \
+    sed -i 's/#StrictModes yes/StrictModes yes/' /etc/ssh/sshd_config
 
-RUN printf '%s\n' \
-    'export EDITOR=nvim' \
-    'export VISUAL=nvim' \
-    'export PAGER=less' \
-    'export CLICOLOR=1' \
-    'export CARGO_HOME="$HOME/.cargo"' \
-    'export PATH="$CARGO_HOME/bin:$HOME/.local/bin:$PATH"' \
-    'export HISTFILE="$HOME/.zsh_history"' \
-    'HISTSIZE=50000' \
-    'SAVEHIST=50000' \
-    'setopt APPEND_HISTORY' \
-    'setopt HIST_IGNORE_DUPS' \
-    'setopt SHARE_HISTORY' \
-    'setopt AUTO_CD' \
-    'setopt INTERACTIVE_COMMENTS' \
-    'autoload -Uz compinit && compinit' \
-    '[[ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh' \
-    '[[ -f /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh' \
-    'PROMPT="%F{red}Exp1o5ive%f%F{white}㉿%f%F{yellow}%n%f %F{cyan}%~%f %(?.%F{green}❯.%F{red}❯)%f "' \
-    'alias ll="ls -lah --color=auto"' \
-    'alias la="ls -A --color=auto"' \
-    'alias cls="clear"' \
-    'alias update="sudo apt-get update"' \
-    'alias upgrade="sudo apt-get upgrade"' \
-    'alias py="python3"' \
-    'alias v="nvim"' \
-    'alias g="git"' \
-    > /home/exp1o5ive/.zshrc \
-    && printf '%s\n' \
-    'set number' \
-    'set relativenumber' \
-    'set mouse=a' \
-    'set termguicolors' \
-    'set expandtab' \
-    'set shiftwidth=4' \
-    'set tabstop=4' \
-    'set smartindent' \
-    'set cursorline' \
-    'set clipboard=unnamedplus' \
-    > /home/exp1o5ive/.config/nvim/init.vim \
-    && chown -R exp1o5ive:exp1o5ive /home/exp1o5ive
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended 2>/dev/null || true
 
-RUN printf '%s\n' \
-    '#!/bin/sh' \
-    'exec dbus-launch --exit-with-session startxfce4' \
-    > /usr/local/bin/xfce-session \
-    && chmod 0755 /usr/local/bin/xfce-session
+RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /root/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting 2>/dev/null || true && \
+    git clone https://github.com/zsh-users/zsh-autosuggestions.git /root/.oh-my-zsh/custom/plugins/zsh-autosuggestions 2>/dev/null || true && \
+    git clone https://github.com/zsh-users/zsh-completions.git /root/.oh-my-zsh/custom/plugins/zsh-completions 2>/dev/null || true
 
-RUN printf '%s\n' \
-    '[Desktop Entry]' \
-    'Version=1.0' \
-    'Type=Application' \
-    'Name=Google Chrome' \
-    'Exec=/usr/bin/google-chrome --no-sandbox --disable-dev-shm-usage --user-data-dir=/home/exp1o5ive/.config/google-chrome %U' \
-    'Terminal=false' \
-    'Categories=Network;WebBrowser;' \
-    > /home/exp1o5ive/.local/share/applications/google-chrome.desktop \
-    && chown -R exp1o5ive:exp1o5ive /home/exp1o5ive/.local
+RUN cat > /root/.zshrc << 'ZSHEOF'
+export ZSH="$HOME/.oh-my-zsh"
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+ZSH_THEME="robbyrussell"
 
-RUN cat > /usr/local/bin/start-desktop <<'EOF'
-#!/usr/bin/env bash
-set -Eeuo pipefail
+plugins=(git zsh-syntax-highlighting zsh-autosuggestions zsh-completions)
 
-: "${PORT:=8080}"
+source $ZSH/oh-my-zsh.sh
 
-if [[ -z "${VNC_PASSWORD:-}" ]]; then
-    echo "ERROR: Configure VNC_PASSWORD in Railway Variables."
-    exit 1
-fi
+export HISTFILE=~/.zsh_history
+export SAVEHIST=10000
+export HISTSIZE=10000
 
-if [[ "${#VNC_PASSWORD}" -lt 8 ]]; then
-    echo "ERROR: VNC_PASSWORD must contain at least 8 characters."
-    exit 1
-fi
+setopt inc_append_history
+setopt share_history
+setopt hist_ignore_dups
+setopt hist_find_no_dups
 
-install -d -o exp1o5ive -g exp1o5ive /home/exp1o5ive/.vnc
+alias ls='ls --color=auto'
+alias ll='ls -lh'
+alias la='ls -lah'
+alias l='ls -CF'
+alias cls='clear'
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git log'
+alias update='apt-get update && apt-get upgrade -y'
 
-printf '%s' "${VNC_PASSWORD:0:8}" \
-    | su -s /bin/bash exp1o5ive -c \
-      'vncpasswd -f > "$HOME/.vnc/passwd"'
+precmd() {
+    print -Pn "\e]0;%n@%m:%~\a"
+}
 
-chmod 600 /home/exp1o5ive/.vnc/passwd
-chown exp1o5ive:exp1o5ive /home/exp1o5ive/.vnc/passwd
+PROMPT=$'%{\033[38;5;214m%}┌─[%{\033[38;5;208m%}%n%{\033[38;5;214m%}@%{\033[38;5;196m%}%m%{\033[38;5;214m%}]─[%{\033[38;5;208m%}%~%{\033[38;5;214m%}]%{\033(B%}\n%{\033[38;5;214m%}└─%{\033[38;5;208m%}❯%{\033[38;5;196m%}❯%{\033[38;5;214m%}❯%{\033(B%}%{\033[m%} '
 
-su -s /bin/bash exp1o5ive -c \
-  'tigervncserver :1 -localhost yes -rfbport 5901 -geometry 1600x900 -depth 24 -SecurityTypes VncAuth -PasswordFile "$HOME/.vnc/passwd" -xstartup /usr/local/bin/xfce-session'
+RPROMPT=$'%{\033[38;5;196m%}[%{\033[38;5;208m%}Railway%{\033[38;5;196m%}]%{\033(B%}%{\033[m%}'
 
-sleep 2
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' verbose true
+ZSHEOF
 
-if ! pgrep -u exp1o5ive -f Xtigervnc >/dev/null; then
-    echo "ERROR: TigerVNC failed to start."
-    exit 1
-fi
+RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git /home/Exp1o5ive/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting 2>/dev/null || true && \
+    git clone https://github.com/zsh-users/zsh-autosuggestions.git /home/Exp1o5ive/.oh-my-zsh/custom/plugins/zsh-autosuggestions 2>/dev/null || true && \
+    git clone https://github.com/zsh-users/zsh-completions.git /home/Exp1o5ive/.oh-my-zsh/custom/plugins/zsh-completions 2>/dev/null || true
 
-exec runuser -u exp1o5ive -- websockify \
-    --web=/usr/share/novnc \
-    --heartbeat=30 \
-    "0.0.0.0:${PORT}" \
-    localhost:5901
-EOF
+RUN cat > /home/Exp1o5ive/.zshrc << 'ZSHEOF'
+export ZSH="$HOME/.oh-my-zsh"
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+ZSH_THEME="robbyrussell"
 
-RUN chmod 0755 /usr/local/bin/start-desktop
+plugins=(git zsh-syntax-highlighting zsh-autosuggestions zsh-completions)
 
-WORKDIR /home/exp1o5ive
+source $ZSH/oh-my-zsh.sh
 
-EXPOSE 8080
+export HISTFILE=~/.zsh_history
+export SAVEHIST=10000
+export HISTSIZE=10000
 
-CMD ["/usr/local/bin/start-desktop"]
+setopt inc_append_history
+setopt share_history
+setopt hist_ignore_dups
+setopt hist_find_no_dups
+
+alias ls='ls --color=auto'
+alias ll='ls -lh'
+alias la='ls -lah'
+alias l='ls -CF'
+alias cls='clear'
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias gl='git log'
+alias update='apt-get update && apt-get upgrade -y'
+
+precmd() {
+    print -Pn "\e]0;%n@%m:%~\a"
+}
+
+PROMPT=$'%{\033[38;5;214m%}┌─[%{\033[38;5;208m%}%n%{\033[38;5;214m%}@%{\033[38;5;196m%}%m%{\033[38;5;214m%}]─[%{\033[38;5;208m%}%~%{\033[38;5;214m%}]%{\033(B%}\n%{\033[38;5;214m%}└─%{\033[38;5;208m%}❯%{\033[38;5;196m%}❯%{\033[38;5;214m%}❯%{\033(B%}%{\033[m%} '
+
+RPROMPT=$'%{\033[38;5;196m%}[%{\033[38;5;208m%}Railway%{\033[38;5;196m%}]%{\033(B%}%{\033[m%}'
+
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' verbose true
+ZSHEOF
+
+RUN chown -R Exp1o5ive:Exp1o5ive /home/Exp1o5ive
+
+EXPOSE 22
+
+RUN echo '#!/bin/sh' > /entrypoint.sh && \
+    echo 'service ssh start' >> /entrypoint.sh && \
+    echo 'exec /bin/zsh' >> /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+WORKDIR /home/Exp1o5ive
+
+ENTRYPOINT ["/entrypoint.sh"]
