@@ -1,4 +1,4 @@
-FROM kalilinux/kali-linux-docker:latest
+FROM kalilinux/kali:latest
 
 ENV DEBIAN_FRONTEND=noninteractive \
     TERM=xterm-256color
